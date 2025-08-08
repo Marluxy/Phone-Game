@@ -479,8 +479,8 @@
                     await signInAnonymously(auth);
                 } catch (error) {
                     console.error("Firebase authentication failed:", error);
-                    userId = crypto.randomUUID();
-                    userIdDisplay.textContent = `User ID: ${userId} (Offline)`;
+                    userId = `guest_${crypto.randomUUID().slice(0, 8)}`;
+                    userIdDisplay.textContent = `User ID: ${userId} (Guest)`;
                     loadLeaderboard();
                 }
             }
@@ -490,19 +490,12 @@
         function updateNetworkStatus() {
             isOnline = navigator.onLine;
             offlineStatus.classList.toggle('show', !isOnline);
-            
-            if (!isOnline) {
-                showOfflineLeaderboard();
-            } else if (isOnline && !userId) {
-                // Try to initialize Firebase again when back online
-                if (auth) {
-                    signInAnonymously(auth).catch(console.error);
-                }
-            }
+            // We no longer need to manually show an offline leaderboard here,
+            // as the onSnapshot listener will handle it.
         }
 
-        function showOfflineLeaderboard() {
-            leaderboardList.innerHTML = '<li><span style="color: #f39c12;">🔒 Offline Mode</span><span></span></li>';
+        function showOfflineLeaderboardMessage() {
+            leaderboardList.innerHTML = '<li><span style="color: #f39c12;">Leaderboard offline</span><span></span></li>';
         }
 
         window.addEventListener('online', updateNetworkStatus);
@@ -554,19 +547,18 @@
         }
 
         function whackMole(event) {
-            if (!gameActive) return;
-
+            if (!gameActive || !event.target.classList.contains('up')) return;
+            
+            score++;
+            scoreDisplay.textContent = score;
+            
             const mole = event.target;
-            if (mole.classList.contains('up')) {
-                score++;
-                scoreDisplay.textContent = score;
-                mole.classList.remove('up');
-                mole.classList.add('hit');
+            mole.classList.remove('up');
+            mole.classList.add('hit');
 
-                setTimeout(() => {
-                    mole.classList.remove('hit');
-                }, 100);
-            }
+            setTimeout(() => {
+                mole.classList.remove('hit');
+            }, 100);
         }
 
         function startTimer() {
@@ -632,48 +624,46 @@
         async function submitScore() {
             const playerName = playerNameInput.value.trim();
             if (playerName.length === 0) {
-                messageText.textContent = "Please enter your name to submit your score!";
+                const originalText = messageText.innerHTML;
+                messageText.innerHTML = `<span style="color: #e74c3c;">Please enter a name!</span>`;
+                setTimeout(() => { messageText.innerHTML = originalText; }, 2000);
                 return;
             }
 
-            if (!isOnline) {
-                messageText.innerHTML = "Cannot submit score while offline. Your score was not saved.";
-                nameInputSection.style.display = 'none';
-                closeMessageBoxButton.style.display = 'block';
-                return;
-            }
-
+            // REMOVED: The explicit offline check. Firestore's offline persistence will handle it.
+            
             loadingSpinner.style.display = 'block';
             submitScoreButton.disabled = true;
             playerNameInput.disabled = true;
 
             try {
                 const leaderboardRef = collection(db, `artifacts/${appId}/public/data/leaderboard`);
+                // addDoc will work offline with persistence enabled and sync when online.
                 await addDoc(leaderboardRef, {
                     name: playerName,
                     score: score,
                     timestamp: serverTimestamp(),
                     userId: userId
                 });
-                console.log("Score submitted successfully!");
-                messageText.innerHTML = `Your score of ${score} has been submitted!`;
+                console.log("Score submitted (or queued offline) successfully!");
+                messageText.innerHTML = `Great job! Your score of ${score} is saved.`;
                 nameInputSection.style.display = 'none';
                 closeMessageBoxButton.style.display = 'block';
             } catch (e) {
                 console.error("Error adding document: ", e);
-                messageText.innerHTML = `Error submitting score. Please try again.`;
-                nameInputSection.style.display = 'block';
-                closeMessageBoxButton.style.display = 'none';
+                messageText.innerHTML = `Error saving score. It may not appear on the leaderboard.`;
+                nameInputSection.style.display = 'none';
+                closeMessageBoxButton.style.display = 'block';
             } finally {
                 loadingSpinner.style.display = 'none';
-                submitScoreButton.disabled = false;
-                playerNameInput.disabled = false;
+                // We keep the button disabled after one submission attempt.
             }
         }
 
         function loadLeaderboard() {
-            if (!db || !isOnline) {
-                showOfflineLeaderboard();
+            // REMOVED: The explicit offline check. onSnapshot will load from cache if available.
+            if (!db) {
+                showOfflineLeaderboardMessage();
                 return;
             }
 
@@ -684,25 +674,34 @@
                 let scores = [];
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    scores.push({ name: data.name, score: data.score });
+                    if (data.name && typeof data.score === 'number') {
+                       scores.push({ name: data.name, score: data.score });
+                    }
                 });
 
+                // Sort and limit on the client side
                 scores.sort((a, b) => b.score - a.score);
                 scores = scores.slice(0, 10);
 
                 leaderboardList.innerHTML = '';
                 if (scores.length === 0) {
-                    leaderboardList.innerHTML = '<li><span>No scores yet!</span><span></span></li>';
+                    leaderboardList.innerHTML = '<li><span>No scores yet!</span><span>Be the first!</span></li>';
                     return;
                 }
                 scores.forEach((scoreData) => {
                     const listItem = document.createElement('li');
-                    listItem.innerHTML = `<span>${scoreData.name}</span><span>${scoreData.score}</span>`;
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = scoreData.name;
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.textContent = scoreData.score;
+                    listItem.appendChild(nameSpan);
+                    listItem.appendChild(scoreSpan);
                     leaderboardList.appendChild(listItem);
                 });
             }, (error) => {
                 console.error("Error fetching leaderboard: ", error);
-                showOfflineLeaderboard();
+                // This will now catch when offline without a populated cache.
+                showOfflineLeaderboardMessage();
             });
         }
 
@@ -725,3 +724,4 @@
     </script>
 </body>
 </html>
+
