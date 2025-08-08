@@ -7,214 +7,48 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #121212;
-            color: #E0E0E0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1rem;
-        }
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background-color: #1E1E1E;
-            padding: 2rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #FF5722;
-        }
-        .info-panel {
-            display: flex;
-            justify-content: space-around;
-            padding: 1rem;
-            background-color: #2C2C2C;
-            border-radius: 1rem;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
-        }
-        .score-display, .timer-display {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #64DD17;
-        }
-        .mole-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            padding: 1rem;
-            background-color: #2C2C2C;
-            border-radius: 1rem;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
-        }
-        .hole {
-            background-color: #424242;
-            border-radius: 50%;
-            width: 100px;
-            height: 100px;
-            position: relative;
-            overflow: hidden;
-            border: 4px solid #555;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-        .mole {
-            width: 100%;
-            height: 100%;
-            background-color: #B71C1C;
-            border-radius: 50%;
-            position: absolute;
-            bottom: -100px;
-            transition: bottom 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .hole.up .mole {
-            bottom: 0;
-        }
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #1E1E1E;
-            background-color: #64DD17;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-        }
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-        }
-        .game-over-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .game-over-modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .modal-content {
-            background-color: #2C2C2C;
-            padding: 2rem;
-            border-radius: 1.5rem;
-            text-align: center;
-            max-width: 90%;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
-        }
-        .modal-content h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #FF5722;
-        }
-        .modal-content p {
-            font-size: 1.5rem;
-            margin: 1rem 0;
-        }
-        .modal-content .final-score {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #64DD17;
-            text-shadow: 0 0 10px rgba(100, 221, 23, 0.5);
-        }
-        .offline-status {
-            font-size: 0.9rem;
-            color: #FFCDD2;
-            background-color: #C62828;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            display: none; /* Hidden by default */
-        }
-        .offline-status.show {
-            display: block;
-        }
+        /* --- your existing styles stay the same --- */
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Whack-a-Mole</h1>
-        <div id="offline-status" class="offline-status">
-            You are offline. The leaderboard is not available.
-        </div>
-        <div class="info-panel">
-            <div class="score-display">Score: <span id="score">0</span></div>
-            <div class="timer-display">Time: <span id="timer">60</span></div>
-        </div>
+    <!-- --- your existing HTML content stays the same --- -->
 
-        <div class="mole-grid">
-            <div class="hole" data-hole="0"><div class="mole"></div></div>
-            <div class="hole" data-hole="1"><div class="mole"></div></div>
-            <div class="hole" data-hole="2"><div class="mole"></div></div>
-            <div class="hole" data-hole="3"><div class="mole"></div></div>
-            <div class="hole" data-hole="4"><div class="mole"></div></div>
-            <div class="hole" data-hole="5"><div class="mole"></div></div>
-            <div class="hole" data-hole="6"><div class="mole"></div></div>
-            <div class="hole" data-hole="7"><div class="mole"></div></div>
-            <div class="hole" data-hole="8"><div class="mole"></div></div>
-        </div>
-
-        <button id="start-btn" class="btn">Start Game</button>
-
-        <div class="leaderboard-section mt-4" id="leaderboard-section">
-            <h2 class="text-2xl font-bold text-white mb-2">Leaderboard</h2>
-            <ul id="leaderboard" class="bg-gray-800 p-4 rounded-xl text-left text-white shadow-inner">
-                <!-- Leaderboard entries will be populated here -->
-            </ul>
-        </div>
-    </div>
-
-    <div id="game-over-modal" class="game-over-modal">
-        <div class="modal-content">
-            <h2>Game Over!</h2>
-            <p>Your final score is:</p>
-            <p class="final-score" id="final-score">0</p>
-            <button class="btn" onclick="window.location.reload()">Play Again</button>
-        </div>
-    </div>
-    
     <script type="module">
-        // Import the Firebase modules needed for the app
+        // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getFirestore, doc, getDoc, setDoc, onSnapshot, collection, 
+            query, orderBy, limit, serverTimestamp, enableIndexedDbPersistence 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables for Firebase configuration
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- Your real Firebase config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCfUYc0o9nC9fhTp4w-WQhw7dvqudmhlx8",
+            authDomain: "whack-a-mole-49b38.firebaseapp.com",
+            projectId: "whack-a-mole-49b38",
+            storageBucket: "whack-a-mole-49b38.firebasestorage.app",
+            messagingSenderId: "362854772496",
+            appId: "1:362854772496:web:5bfa887d324de75abe7f95",
+            measurementId: "G-Y90KKRQG4N"
+        };
 
-        // Initialize Firebase and Firestore
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        let userId = null;
+        const appId = "whack-a-mole"; // used for leaderboard collection
+
+        // Initialize Firebase
+        let db, auth, userId = null;
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Enable offline persistence
+            enableIndexedDbPersistence(db).catch(err => {
+                console.warn("Firestore persistence error:", err.code);
+            });
+        } catch (e) {
+            console.error("Firebase init failed:", e);
+        }
 
         // Game state variables
         let score = 0;
@@ -232,25 +66,22 @@
         const offlineStatus = document.getElementById('offline-status');
         let isOnline = true;
 
-        // Firebase authentication and data loading
+        // Setup Firebase authentication
         async function setupFirebase() {
+            if (!auth) return; // Firebase not loaded
             try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
                 userId = auth.currentUser.uid;
-                console.log("Firebase authenticated with user ID:", userId);
+                console.log("Firebase authenticated:", userId);
                 loadLeaderboard();
             } catch (error) {
                 console.error("Firebase authentication failed:", error);
-                // Handle authentication failure
             }
         }
 
-        // Function to load the leaderboard
+        // Load leaderboard
         function loadLeaderboard() {
+            if (!db) return;
             const q = query(collection(db, `artifacts/${appId}/public/data/leaderboard`), orderBy("score", "desc"), limit(10));
             onSnapshot(q, (querySnapshot) => {
                 leaderboardList.innerHTML = '';
@@ -265,12 +96,9 @@
             });
         }
 
-        // Function to save the score
+        // Save score
         async function saveScore(finalScore) {
-            if (!isOnline) {
-                console.warn("Cannot save score while offline.");
-                return;
-            }
+            if (!isOnline || !db) return;
             try {
                 const docRef = doc(db, `artifacts/${appId}/public/data/leaderboard`, userId);
                 const docSnap = await getDoc(docRef);
@@ -279,32 +107,25 @@
                 if (docSnap.exists()) {
                     playerName = docSnap.data().name || "Player";
                 } else {
-                    // Prompt for a name if it's the first time
-                    let newName = prompt("What's your name for the leaderboard?");
-                    if (newName) {
-                        playerName = newName;
-                    }
+                    const newName = prompt("What's your name for the leaderboard?") || "Player";
+                    playerName = newName;
                 }
-                
+
                 await setDoc(docRef, {
                     name: playerName,
                     score: finalScore,
                     timestamp: serverTimestamp()
                 }, { merge: true });
-
-                console.log("Score saved successfully!");
             } catch (error) {
                 console.error("Error saving score:", error);
             }
         }
 
-        // Game logic functions
+        // Game functions
         function randomHole(holes) {
             const index = Math.floor(Math.random() * holes.length);
             const hole = holes[index];
-            if (hole === lastHole) {
-                return randomHole(holes);
-            }
+            if (hole === lastHole) return randomHole(holes);
             lastHole = hole;
             return hole;
         }
@@ -315,9 +136,7 @@
             hole.classList.add('up');
             moleTimerId = setTimeout(() => {
                 hole.classList.remove('up');
-                if (timeLeft > 0) {
-                    popUp();
-                }
+                if (timeLeft > 0) popUp();
             }, time);
         }
 
@@ -331,9 +150,7 @@
             timerId = setInterval(() => {
                 timeLeft--;
                 timerDisplay.textContent = timeLeft;
-                if (timeLeft <= 0) {
-                    endGame();
-                }
+                if (timeLeft <= 0) endGame();
             }, 1000);
 
             popUp();
@@ -346,13 +163,11 @@
             startButton.disabled = false;
             finalScoreDisplay.textContent = score;
             gameOverModal.classList.add('show');
-            if (isOnline) {
-                saveScore(score);
-            }
+            if (isOnline) saveScore(score);
         }
 
         function whack(e) {
-            if (!e.isTrusted) return; // Cheating prevention
+            if (!e.isTrusted) return;
             if (this.classList.contains('up')) {
                 score++;
                 scoreDisplay.textContent = score;
@@ -360,45 +175,28 @@
             }
         }
 
-        // Add event listeners to the holes
         holes.forEach(hole => hole.addEventListener('click', whack));
         startButton.addEventListener('click', startGame);
 
-        // PWA and offline-specific code
+        // Offline/online handling
         function handleNetworkStatus() {
             isOnline = navigator.onLine;
-            if (isOnline) {
-                offlineStatus.classList.remove('show');
-                // Re-initialize Firebase if we come back online
-                if (!userId) {
-                    setupFirebase();
-                } else {
-                    loadLeaderboard();
-                }
-            } else {
-                offlineStatus.classList.add('show');
-            }
+            offlineStatus.classList.toggle('show', !isOnline);
+            if (isOnline && !userId) setupFirebase();
         }
 
         window.addEventListener('online', handleNetworkStatus);
         window.addEventListener('offline', handleNetworkStatus);
-        handleNetworkStatus(); // Check on page load
+        handleNetworkStatus();
 
-        // Register the service worker
+        // Register service worker
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js').then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                }).catch(error => {
-                    console.log('Service Worker registration failed:', error);
-                });
-            });
+            navigator.serviceWorker.register('/service-worker.js')
+            .then(reg => console.log('Service Worker registered:', reg.scope))
+            .catch(err => console.error('SW registration failed:', err));
         }
 
-        // Initial setup
         setupFirebase();
-
     </script>
 </body>
 </html>
-
