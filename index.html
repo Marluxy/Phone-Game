@@ -3,26 +3,410 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whack-a-Mole PWA</title>
+    <title>Whack-a-Mole Pro</title>
     <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* --- your existing styles stay the same --- */
+        /* General body styling */
+        body {
+            font-family: 'Press Start 2P', cursive; /* Retro arcade font */
+            background-color: #2c3e50; /* Dark background */
+            color: #ecf0f1; /* Light text color */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; /* Full viewport height */
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        /* Offline indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            display: none;
+            z-index: 1000;
+            border: 2px solid #c0392b;
+        }
+
+        .offline-indicator.show {
+            display: block;
+        }
+
+        /* Game container styling */
+        .game-container {
+            background-color: #34495e; /* Slightly lighter dark background */
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            width: 100%;
+            max-width: 500px; /* Max width for larger screens */
+            margin-bottom: 20px;
+            border: 5px solid #e74c3c; /* Red border */
+            position: relative;
+        }
+
+        h1 {
+            color: #f1c40f; /* Yellow title */
+            margin-bottom: 20px;
+            font-size: 1.8em; /* Responsive font size */
+            text-shadow: 3px 3px #c0392b; /* Retro text shadow */
+        }
+
+        /* Score and timer display */
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            font-size: 1.2em;
+            background-color: #2ecc71; /* Green background */
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid #27ae60;
+        }
+
+        .score-board div {
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Game grid for moles */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns */
+            grid-gap: 15px; /* Gap between moles */
+            background-color: #7f8c8d; /* Grey background for the grid */
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+            border: 3px solid #607d8b;
+        }
+
+        /* Individual mole hole */
+        .hole {
+            background-color: #95a5a6; /* Light grey for holes */
+            border-radius: 50%; /* Circular holes */
+            width: 100px; /* Fixed size for circular holes */
+            height: 100px;
+            margin: 0 auto; /* Center holes */
+            overflow: hidden; /* Hide mole when down */
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+            border: 3px solid #7f8c8d;
+        }
+
+        /* Mole styling */
+        .mole {
+            background-color: #e67e22; /* Orange for moles */
+            width: 90%; /* Slightly smaller than hole */
+            height: 90%;
+            border-radius: 50%;
+            position: absolute;
+            bottom: -100%; /* Start below the hole */
+            left: 5%;
+            transition: bottom 0.15s ease-out; /* Faster pop-up animation */
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            border: 2px solid #d35400;
+        }
+
+        /* Mole pop-up state */
+        .mole.up {
+            bottom: 5%; /* Move up to be visible */
+            background-color: #f39c12; /* Brighter orange when up */
+        }
+
+        /* Mole hit state */
+        .mole.hit {
+            background-color: #c0392b; /* Red when hit */
+            transform: scale(0.9); /* Slightly shrink when hit */
+        }
+
+        /* Button styling */
+        .button-container {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            background-color: #3498db; /* Blue button */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 5px 0 #2980b9; /* 3D effect */
+            transition: all 0.1s ease;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            box-shadow: 0 3px 0 #2980b9;
+            transform: translateY(2px);
+        }
+
+        button:active {
+            background-color: #2980b9;
+            box-shadow: none;
+            transform: translateY(5px);
+        }
+
+        /* Custom Message Box (Game Over / Score Submission) */
+        .message-box {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent overlay */
+            align-items: center;
+            justify-content: center;
+            z-index: 1000; /* On top of everything */
+        }
+
+        .message-content {
+            background-color: #34495e;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            border: 5px solid #e74c3c;
+            max-width: 90%; /* Responsive width */
+            position: relative; /* For loading spinner */
+        }
+
+        .message-content h2 {
+            color: #f1c40f;
+            font-size: 2em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px #c0392b;
+        }
+
+        .message-content p {
+            font-size: 1.3em;
+            margin-bottom: 25px;
+        }
+
+        .message-content input[type="text"] {
+            width: calc(100% - 40px); /* Adjust for padding */
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 2px solid #2ecc71;
+            border-radius: 8px;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1em;
+            text-align: center;
+            outline: none;
+        }
+
+        .message-content input[type="text"]::placeholder {
+            color: #7f8c8d;
+        }
+
+        .message-content button {
+            background-color: #2ecc71;
+            box-shadow: 0 5px 0 #27ae60;
+        }
+
+        .message-content button:hover {
+            background-color: #27ae60;
+            box-shadow: 0 3px 0 #27ae60;
+        }
+
+        /* Leaderboard Styling */
+        .leaderboard-container {
+            background-color: #34495e;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            border: 5px solid #3498db; /* Blue border */
+            margin-top: 20px; /* Space from game container */
+        }
+
+        .leaderboard-container h2 {
+            color: #f1c40f;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px #2980b9;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            max-height: 300px; /* Limit height for scroll */
+            overflow-y: auto; /* Enable scrolling if many scores */
+            border: 2px solid #2980b9;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .leaderboard-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 1.1em;
+        }
+
+        .leaderboard-list li:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-list li span:first-child {
+            font-weight: bold;
+            color: #ecf0f1;
+        }
+
+        .leaderboard-list li span:last-child {
+            color: #2ecc71;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -15px; /* Half of height */
+            margin-left: -15px; /* Half of width */
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Media queries for responsiveness */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .score-board {
+                font-size: 1em;
+                flex-direction: column; /* Stack score and timer on small screens */
+                gap: 10px;
+            }
+
+            .hole {
+                width: 80px;
+                height: 80px;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+
+            .message-content h2 {
+                font-size: 1.5em;
+            }
+
+            .message-content p {
+                font-size: 1em;
+            }
+
+            .leaderboard-container h2 {
+                font-size: 1.2em;
+            }
+
+            .leaderboard-list li {
+                font-size: 0.9em;
+            }
+
+            .offline-indicator {
+                top: 10px;
+                right: 10px;
+                font-size: 0.6em;
+                padding: 8px 12px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- --- your existing HTML content stays the same --- -->
+    <!-- Offline indicator -->
+    <div class="offline-indicator" id="offlineStatus">
+        📱 Playing Offline
+    </div>
 
+    <div class="game-container">
+        <h1>Whack-a-Mole!</h1>
+        <div class="score-board">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="time">Time: <span id="time">20</span>s</div>
+        </div>
+
+        <div class="game-grid" id="gameGrid">
+            <!-- Moles will be dynamically generated here -->
+        </div>
+
+        <div class="button-container">
+            <button id="startGameButton">Start Game</button>
+        </div>
+    </div>
+
+    <!-- Custom Message Box (Game Over / Score Submission) -->
+    <div class="message-box" id="messageBox">
+        <div class="message-content">
+            <div class="loading-spinner" id="loadingSpinner"></div>
+            <h2 id="messageTitle">Game Over!</h2>
+            <p id="messageText">Your final score is: <span id="finalScore">0</span></p>
+            <div id="nameInputSection">
+                <input type="text" id="playerNameInput" placeholder="Enter your name (max 10 chars)" maxlength="10">
+                <button id="submitScoreButton">Submit Score</button>
+            </div>
+            <button id="closeMessageBoxButton" style="display: none;">Close</button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Container -->
+    <div class="leaderboard-container">
+        <h2>Leaderboard</h2>
+        <ul class="leaderboard-list" id="leaderboardList">
+            <!-- Leaderboard scores will be loaded here -->
+            <li><span>Loading...</span><span></span></li>
+        </ul>
+        <p id="userIdDisplay" style="font-size: 0.8em; margin-top: 15px; color: #7f8c8d;"></p>
+    </div>
+
+    <!-- Firebase SDKs -->
     <script type="module">
-        // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
-            getFirestore, doc, getDoc, setDoc, onSnapshot, collection, 
-            query, orderBy, limit, serverTimestamp, enableIndexedDbPersistence 
+            getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, 
+            enableIndexedDbPersistence 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Your real Firebase config ---
+        // Your Firebase config - replace with your actual config
         const firebaseConfig = {
             apiKey: "AIzaSyCfUYc0o9nC9fhTp4w-WQhw7dvqudmhlx8",
             authDomain: "whack-a-mole-49b38.firebaseapp.com",
@@ -33,170 +417,311 @@
             measurementId: "G-Y90KKRQG4N"
         };
 
-        const appId = "whack-a-mole"; // used for leaderboard collection
+        const appId = "whack-a-mole-49b38";
 
-        // Initialize Firebase
-        let db, auth, userId = null;
+        // Global variables for Firebase instances
+        let app;
+        let db;
+        let auth;
+        let userId = 'anonymous';
+        let isOnline = navigator.onLine;
+
+        // Get DOM elements
+        const scoreDisplay = document.getElementById('score');
+        const timeDisplay = document.getElementById('time');
+        const gameGrid = document.getElementById('gameGrid');
+        const startGameButton = document.getElementById('startGameButton');
+        const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const submitScoreButton = document.getElementById('submitScoreButton');
+        const closeMessageBoxButton = document.getElementById('closeMessageBoxButton');
+        const nameInputSection = document.getElementById('nameInputSection');
+        const leaderboardList = document.getElementById('leaderboardList');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const offlineStatus = document.getElementById('offlineStatus');
+
+        // Game variables
+        let score = 0;
+        let time = 20;
+        let timerId;
+        let molePopUpTimerId;
+        let lastHole;
+        let gameActive = false;
+        const numberOfHoles = 9;
+
+        // --- Firebase Initialization ---
         try {
-            const app = initializeApp(firebaseConfig);
+            app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
 
             // Enable offline persistence
-            enableIndexedDbPersistence(db).catch(err => {
+            enableIndexedDbPersistence(db).catch((err) => {
                 console.warn("Firestore persistence error:", err.code);
             });
-        } catch (e) {
-            console.error("Firebase init failed:", e);
+        } catch (error) {
+            console.error("Firebase initialization failed:", error);
         }
 
-        // Game state variables
-        let score = 0;
-        let timeLeft = 60;
-        let timerId;
-        let moleTimerId;
-        let lastHole;
-        let holes = document.querySelectorAll('.hole');
-        const scoreDisplay = document.getElementById('score');
-        const timerDisplay = document.getElementById('timer');
-        const startButton = document.getElementById('start-btn');
-        const gameOverModal = document.getElementById('game-over-modal');
-        const finalScoreDisplay = document.getElementById('final-score');
-        const leaderboardList = document.getElementById('leaderboard');
-        const offlineStatus = document.getElementById('offline-status');
-        let isOnline = true;
-
-        // Setup Firebase authentication
-        async function setupFirebase() {
-            if (!auth) return; // Firebase not loaded
-            try {
-                await signInAnonymously(auth);
-                userId = auth.currentUser.uid;
-                console.log("Firebase authenticated:", userId);
+        // --- Authentication ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
+                userIdDisplay.textContent = `User ID: ${userId}`;
+                console.log("Firebase authenticated. User ID:", userId);
                 loadLeaderboard();
-            } catch (error) {
-                console.error("Firebase authentication failed:", error);
-            }
-        }
-
-        // Load leaderboard
-        function loadLeaderboard() {
-            if (!db) return;
-            const q = query(collection(db, `artifacts/${appId}/public/data/leaderboard`), orderBy("score", "desc"), limit(10));
-            onSnapshot(q, (querySnapshot) => {
-                leaderboardList.innerHTML = '';
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const entry = document.createElement('li');
-                    entry.textContent = `${data.name}: ${data.score}`;
-                    leaderboardList.appendChild(entry);
-                });
-            }, (error) => {
-                console.error("Error fetching leaderboard:", error);
-            });
-        }
-
-        // Save score
-        async function saveScore(finalScore) {
-            if (!isOnline || !db) return;
-            try {
-                const docRef = doc(db, `artifacts/${appId}/public/data/leaderboard`, userId);
-                const docSnap = await getDoc(docRef);
-
-                let playerName = "Player";
-                if (docSnap.exists()) {
-                    playerName = docSnap.data().name || "Player";
-                } else {
-                    const newName = prompt("What's your name for the leaderboard?") || "Player";
-                    playerName = newName;
+            } else {
+                try {
+                    await signInAnonymously(auth);
+                } catch (error) {
+                    console.error("Firebase authentication failed:", error);
+                    userId = crypto.randomUUID();
+                    userIdDisplay.textContent = `User ID: ${userId} (Offline)`;
+                    loadLeaderboard();
                 }
+            }
+        });
 
-                await setDoc(docRef, {
-                    name: playerName,
-                    score: finalScore,
-                    timestamp: serverTimestamp()
-                }, { merge: true });
-            } catch (error) {
-                console.error("Error saving score:", error);
+        // --- Network status handling ---
+        function updateNetworkStatus() {
+            isOnline = navigator.onLine;
+            offlineStatus.classList.toggle('show', !isOnline);
+            
+            if (!isOnline) {
+                showOfflineLeaderboard();
+            } else if (isOnline && !userId) {
+                // Try to initialize Firebase again when back online
+                if (auth) {
+                    signInAnonymously(auth).catch(console.error);
+                }
             }
         }
 
-        // Game functions
-        function randomHole(holes) {
-            const index = Math.floor(Math.random() * holes.length);
-            const hole = holes[index];
-            if (hole === lastHole) return randomHole(holes);
+        function showOfflineLeaderboard() {
+            leaderboardList.innerHTML = '<li><span style="color: #f39c12;">🔒 Offline Mode</span><span></span></li>';
+        }
+
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+        updateNetworkStatus();
+
+        // --- Game Setup ---
+        function createHoles() {
+            for (let i = 0; i < numberOfHoles; i++) {
+                const hole = document.createElement('div');
+                hole.classList.add('hole');
+                hole.dataset.id = i;
+
+                const mole = document.createElement('div');
+                mole.classList.add('mole');
+                mole.addEventListener('click', whackMole);
+                hole.appendChild(mole);
+                gameGrid.appendChild(hole);
+            }
+        }
+
+        // --- Game Logic ---
+        function randomHole() {
+            const holes = document.querySelectorAll('.hole');
+            const randomIndex = Math.floor(Math.random() * holes.length);
+            const hole = holes[randomIndex];
+
+            if (hole === lastHole) {
+                return randomHole();
+            }
             lastHole = hole;
             return hole;
         }
 
-        function popUp() {
-            const time = Math.random() * 1000 + 500;
-            const hole = randomHole(holes);
-            hole.classList.add('up');
-            moleTimerId = setTimeout(() => {
-                hole.classList.remove('up');
-                if (timeLeft > 0) popUp();
-            }, time);
+        function popUpMole() {
+            if (!gameActive) return;
+
+            const mole = randomHole().querySelector('.mole');
+            mole.classList.add('up');
+
+            const randomTimeUp = Math.random() * 500 + 300;
+            setTimeout(() => {
+                mole.classList.remove('up');
+                if (gameActive) {
+                    const randomTimeNextPop = Math.random() * 600 + 400;
+                    molePopUpTimerId = setTimeout(popUpMole, randomTimeNextPop);
+                }
+            }, randomTimeUp);
         }
 
-        function startGame() {
-            score = 0;
-            timeLeft = 60;
-            scoreDisplay.textContent = score;
-            timerDisplay.textContent = timeLeft;
-            startButton.disabled = true;
+        function whackMole(event) {
+            if (!gameActive) return;
 
-            timerId = setInterval(() => {
-                timeLeft--;
-                timerDisplay.textContent = timeLeft;
-                if (timeLeft <= 0) endGame();
-            }, 1000);
-
-            popUp();
-        }
-
-        function endGame() {
-            clearInterval(timerId);
-            clearTimeout(moleTimerId);
-            holes.forEach(hole => hole.classList.remove('up'));
-            startButton.disabled = false;
-            finalScoreDisplay.textContent = score;
-            gameOverModal.classList.add('show');
-            if (isOnline) saveScore(score);
-        }
-
-        function whack(e) {
-            if (!e.isTrusted) return;
-            if (this.classList.contains('up')) {
+            const mole = event.target;
+            if (mole.classList.contains('up')) {
                 score++;
                 scoreDisplay.textContent = score;
-                this.classList.remove('up');
+                mole.classList.remove('up');
+                mole.classList.add('hit');
+
+                setTimeout(() => {
+                    mole.classList.remove('hit');
+                }, 100);
             }
         }
 
-        holes.forEach(hole => hole.addEventListener('click', whack));
-        startButton.addEventListener('click', startGame);
-
-        // Offline/online handling
-        function handleNetworkStatus() {
-            isOnline = navigator.onLine;
-            offlineStatus.classList.toggle('show', !isOnline);
-            if (isOnline && !userId) setupFirebase();
+        function startTimer() {
+            time = 20;
+            timeDisplay.textContent = time;
+            timerId = setInterval(() => {
+                time--;
+                timeDisplay.textContent = time;
+                if (time <= 0) {
+                    clearInterval(timerId);
+                    endGame();
+                }
+            }, 1000);
         }
 
-        window.addEventListener('online', handleNetworkStatus);
-        window.addEventListener('offline', handleNetworkStatus);
-        handleNetworkStatus();
+        function startGame() {
+            if (gameActive) return;
+            gameActive = true;
+            score = 0;
+            scoreDisplay.textContent = score;
+            startGameButton.style.display = 'none';
+            hideMessageBox();
 
-        // Register service worker
+            clearTimeout(molePopUpTimerId);
+            clearInterval(timerId);
+
+            startTimer();
+            popUpMole();
+        }
+
+        function endGame() {
+            gameActive = false;
+            startGameButton.style.display = 'block';
+            startGameButton.disabled = false;
+            clearTimeout(molePopUpTimerId);
+            clearInterval(timerId);
+
+            document.querySelectorAll('.mole').forEach(mole => {
+                mole.classList.remove('up');
+                mole.classList.remove('hit');
+            });
+
+            showMessageBox("Game Over!", `Your final score is: <span id="finalScore">${score}</span>`);
+            nameInputSection.style.display = 'block';
+            closeMessageBoxButton.style.display = 'none';
+            playerNameInput.value = '';
+            playerNameInput.focus();
+        }
+
+        // --- Message Box Functions ---
+        function showMessageBox(title, text) {
+            messageTitle.textContent = title;
+            messageText.innerHTML = text;
+            messageBox.style.display = 'flex';
+            finalScoreDisplay.textContent = score;
+        }
+
+        function hideMessageBox() {
+            messageBox.style.display = 'none';
+        }
+
+        // --- Leaderboard Functions ---
+        async function submitScore() {
+            const playerName = playerNameInput.value.trim();
+            if (playerName.length === 0) {
+                messageText.textContent = "Please enter your name to submit your score!";
+                return;
+            }
+
+            if (!isOnline) {
+                messageText.innerHTML = "Cannot submit score while offline. Your score was not saved.";
+                nameInputSection.style.display = 'none';
+                closeMessageBoxButton.style.display = 'block';
+                return;
+            }
+
+            loadingSpinner.style.display = 'block';
+            submitScoreButton.disabled = true;
+            playerNameInput.disabled = true;
+
+            try {
+                const leaderboardRef = collection(db, `artifacts/${appId}/public/data/leaderboard`);
+                await addDoc(leaderboardRef, {
+                    name: playerName,
+                    score: score,
+                    timestamp: serverTimestamp(),
+                    userId: userId
+                });
+                console.log("Score submitted successfully!");
+                messageText.innerHTML = `Your score of ${score} has been submitted!`;
+                nameInputSection.style.display = 'none';
+                closeMessageBoxButton.style.display = 'block';
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                messageText.innerHTML = `Error submitting score. Please try again.`;
+                nameInputSection.style.display = 'block';
+                closeMessageBoxButton.style.display = 'none';
+            } finally {
+                loadingSpinner.style.display = 'none';
+                submitScoreButton.disabled = false;
+                playerNameInput.disabled = false;
+            }
+        }
+
+        function loadLeaderboard() {
+            if (!db || !isOnline) {
+                showOfflineLeaderboard();
+                return;
+            }
+
+            const leaderboardRef = collection(db, `artifacts/${appId}/public/data/leaderboard`);
+            const q = query(leaderboardRef);
+
+            onSnapshot(q, (snapshot) => {
+                let scores = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    scores.push({ name: data.name, score: data.score });
+                });
+
+                scores.sort((a, b) => b.score - a.score);
+                scores = scores.slice(0, 10);
+
+                leaderboardList.innerHTML = '';
+                if (scores.length === 0) {
+                    leaderboardList.innerHTML = '<li><span>No scores yet!</span><span></span></li>';
+                    return;
+                }
+                scores.forEach((scoreData) => {
+                    const listItem = document.createElement('li');
+                    listItem.innerHTML = `<span>${scoreData.name}</span><span>${scoreData.score}</span>`;
+                    leaderboardList.appendChild(listItem);
+                });
+            }, (error) => {
+                console.error("Error fetching leaderboard: ", error);
+                showOfflineLeaderboard();
+            });
+        }
+
+        // --- Event Listeners ---
+        startGameButton.addEventListener('click', startGame);
+        submitScoreButton.addEventListener('click', submitScore);
+        closeMessageBoxButton.addEventListener('click', hideMessageBox);
+
+        // --- Service Worker Registration ---
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
-            .then(reg => console.log('Service Worker registered:', reg.scope))
-            .catch(err => console.error('SW registration failed:', err));
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('Service Worker registered:', reg.scope))
+                .catch(err => console.error('SW registration failed:', err));
         }
 
-        setupFirebase();
+        // --- Initial Setup ---
+        window.onload = function() {
+            createHoles();
+        };
     </script>
 </body>
 </html>
