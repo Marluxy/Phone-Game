@@ -23,6 +23,23 @@
             overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
+        /* Install Button Styling */
+        #installButton {
+            background-color: #f1c40f;
+            color: #2c3e50;
+            border: 3px solid #f39c12;
+            box-shadow: 0 5px 0 #f39c12;
+            padding: 10px 20px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            display: none; /* Hidden by default */
+        }
+
+        #installButton:hover {
+            background-color: #f39c12;
+        }
+
+
         /* Offline indicator */
         .offline-indicator {
             position: fixed;
@@ -352,6 +369,9 @@
     </style>
 </head>
 <body>
+    <!-- Install Button -->
+    <button id="installButton">Install App</button>
+
     <!-- Offline indicator -->
     <div class="offline-indicator" id="offlineStatus">
         📱 Playing Offline
@@ -443,6 +463,8 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const offlineStatus = document.getElementById('offlineStatus');
+        const installButton = document.getElementById('installButton');
+
 
         // Game variables
         let score = 0;
@@ -452,6 +474,40 @@
         let lastHole;
         let gameActive = false;
         const numberOfHoles = 9;
+
+        // --- PWA Install Prompt Logic ---
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI to notify the user they can install the PWA
+            installButton.style.display = 'block';
+            console.log('`beforeinstallprompt` event was fired.');
+        });
+        
+        installButton.addEventListener('click', async () => {
+            // Hide the app provided install promotion
+            installButton.style.display = 'none';
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            // We've used the prompt, and can't use it again, throw it away
+            deferredPrompt = null;
+        });
+
+        window.addEventListener('appinstalled', () => {
+            // Hide the app-provided install promotion
+            installButton.style.display = 'none';
+            // Clear the deferredPrompt so it can be garbage collected
+            deferredPrompt = null;
+            console.log('PWA was installed');
+        });
+
 
         // --- Firebase Initialization ---
         try {
